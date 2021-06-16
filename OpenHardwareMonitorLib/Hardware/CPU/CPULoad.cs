@@ -37,9 +37,11 @@ namespace OpenHardwareMonitor.Hardware.CPU {
 
     private long[] idleTimes;
     private long[] totalTimes;
+    private long totalAppTime;
 
     private float totalLoad;
     private readonly float[] coreLoads;
+    private float appLoad;
 
     private readonly bool available;
 
@@ -69,6 +71,12 @@ namespace OpenHardwareMonitor.Hardware.CPU {
       return true;
     }
 
+    private static bool GetAppTimes(out long total) {
+        var process = System.Diagnostics.Process.GetCurrentProcess();
+        total = process.TotalProcessorTime.Ticks;
+        return true;
+    }
+
     public CPULoad(CPUID[][] cpuid) {
       this.cpuid = cpuid;
       this.coreLoads = new float[cpuid.Length];         
@@ -91,6 +99,10 @@ namespace OpenHardwareMonitor.Hardware.CPU {
       return totalLoad;
     }
 
+    public float GetAppLoad() {
+        return appLoad;
+    }
+
     public float GetCoreLoad(int core) {
       return coreLoads[core];
     }
@@ -101,8 +113,11 @@ namespace OpenHardwareMonitor.Hardware.CPU {
 
       long[] newIdleTimes;
       long[] newTotalTimes;
+      long newAppTotalTime;
 
       if (!GetTimes(out newIdleTimes, out newTotalTimes))
+        return;
+      if (!GetAppTimes(out newAppTotalTime))
         return;
 
       for (int i = 0; i < Math.Min(newTotalTimes.Length, totalTimes.Length); i++) 
@@ -113,12 +128,15 @@ namespace OpenHardwareMonitor.Hardware.CPU {
         return;
 
       float total = 0;
+      float totaltime = 0;
+      float totalApp = 0;
       int count = 0;
       for (int i = 0; i < cpuid.Length; i++) {
         float value = 0;
         for (int j = 0; j < cpuid[i].Length; j++) {
           long index = cpuid[i][j].Thread;
           if (index < newIdleTimes.Length && index < totalTimes.Length) {
+            totaltime += (newTotalTimes[index]) - (this.totalTimes[index]);
             float idle = 
               (float)(newIdleTimes[index] - this.idleTimes[index]) /
               (float)(newTotalTimes[index] - this.totalTimes[index]);
@@ -131,6 +149,7 @@ namespace OpenHardwareMonitor.Hardware.CPU {
         value = value < 0 ? 0 : value;
         coreLoads[i] = value * 100;
       }
+      totalApp =  newAppTotalTime - this.totalAppTime;
       if (count > 0) {
         total = 1.0f - total / count;
         total = total < 0 ? 0 : total;
@@ -139,8 +158,18 @@ namespace OpenHardwareMonitor.Hardware.CPU {
       }
       this.totalLoad = total * 100;
 
+      if (this.totalAppTime == 0)
+      {
+          this.appLoad = 0;
+      }
+      else
+      {
+          this.appLoad = totalApp / totaltime * 100.0f;
+      }
+
       this.totalTimes = newTotalTimes;
       this.idleTimes = newIdleTimes;
+      this.totalAppTime = newAppTotalTime;
     }
 
     protected static class NativeMethods {

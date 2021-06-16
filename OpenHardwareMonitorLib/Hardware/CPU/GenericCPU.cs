@@ -44,6 +44,7 @@ namespace OpenHardwareMonitor.Hardware.CPU {
 
     private readonly CPULoad cpuLoad;
     private readonly Sensor totalLoad;
+    private readonly Sensor appLoad;
     private readonly Sensor[] coreLoads;
 
     protected string CoreString(int i) {
@@ -94,6 +95,8 @@ namespace OpenHardwareMonitor.Hardware.CPU {
       else
         totalLoad = null;
       coreLoads = new Sensor[coreCount];
+      appLoad = new Sensor("CPU APP", 0, SensorType.Load, this, settings);
+
       for (int i = 0; i < coreLoads.Length; i++)
         coreLoads[i] = new Sensor(CoreString(i), i + 1,
           SensorType.Load, this, settings);
@@ -103,6 +106,7 @@ namespace OpenHardwareMonitor.Hardware.CPU {
           ActivateSensor(sensor);
         if (totalLoad != null)
           ActivateSensor(totalLoad);
+        ActivateSensor(appLoad);
       }
 
       if (hasTimeStampCounter) {
@@ -306,6 +310,7 @@ namespace OpenHardwareMonitor.Hardware.CPU {
           coreLoads[i].Value = cpuLoad.GetCoreLoad(i);
         if (totalLoad != null)
           totalLoad.Value = cpuLoad.GetTotalLoad();
+        appLoad.Value = cpuLoad.GetAppLoad();
       }
     }
   }
