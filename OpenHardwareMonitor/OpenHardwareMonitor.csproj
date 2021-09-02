@@ -76,7 +76,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="Aga.Controls, Version=1.7.0.0, Culture=neutral, PublicKeyToken=fcc90fbf924463a3">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\External\Aga.Controls\Bin\Debug\Aga.Controls.dll</HintPath>
+      <HintPath>..\External\Aga.Controls\obj\Debug\Aga.Controls.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
